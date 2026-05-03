@@ -1,0 +1,114 @@
+﻿@page "/"
+@using ProcessMonitor.Models
+@using ProcessMonitor.Services
+@inject ProductionService ProductionService
+
+
+<PageTitle>Process Monitor</PageTitle>
+
+<h1>Process Monitor</h1>
+
+<p>Mini dashboard Blazor per simulare il monitoraggio di fasi produttive, efficenza e possibili colli di bottiglia</p>
+
+@* Card *@
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5>Fasi monitorate</h5>
+                <p class="fs-3">@TotalSteps</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5>Efficienza media</h5>
+                <p class="fs-3">@AverageEfficiency%</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5>Criticità rilevate</h5>
+                <p class="fs-3">@CriticalCount</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@* tabella *@
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Fase</th>
+            <th>Macchina</th>
+            <th>Stato</th>
+            <th>Pezzi/ora</th>
+            <th>Coda</th>
+            <th>Efficienza</th>
+            <th>Valutazione</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var step in productionSteps)
+        {
+            <tr>
+                <td>@step.Name</td>
+                <td>@step.Machine</td>
+                <td>@step.Status</td>
+                <td>@step.PiecesPerHour</td>
+                <td>@step.QueueCount</td>
+                <td>@step.Efficiency%</td>
+                <td>@GetEvaluation(step)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+@code {
+    private List<ProductionStep> productionSteps = new();
+
+    private int TotalSteps => productionSteps.Count;
+
+    private int AverageEfficiency =>
+    productionSteps.Count == 0
+    ? 0 : (int)productionSteps.Average(step => step.Efficiency);
+
+    private int CriticalCount =>
+    productionSteps.Count(step =>
+        step.Efficiency < 70 ||
+        step.Status == "Ferma" ||
+        step.QueueCount > 5
+    );
+
+    protected override void OnInitialized()
+    {
+        productionSteps = ProductionService.GetProductionSteps();
+    }
+
+    private string GetEvaluation(ProductionStep step)
+    {
+        if (step.Status == "Ferma")
+        {
+            return "Fermo macchina";
+        }
+
+        if (step.Efficiency < 70)
+        {
+            return "Possibile collo di bottiglia";
+        }
+
+        if (step.QueueCount > 5)
+        {
+            return "Accumulo in coda";
+        }
+
+        return "OK";
+    }
+}
