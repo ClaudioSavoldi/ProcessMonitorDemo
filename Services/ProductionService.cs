@@ -1,18 +1,51 @@
-﻿using ProcessMonitor.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using ProcessMonitor.Data;
+using ProcessMonitor.Enums;
+using ProcessMonitor.Models;
 
-namespace ProcessMonitor.Services
+
+namespace ProcessMonitorDemo.Services;
+
+public class ProductionService
 {
-    public class ProductionService
+    private readonly AppDbContext _context;
+
+    public ProductionService(AppDbContext context)
     {
-        public List<ProductionStep> GetProductionSteps()
+        _context = context;
+    }
+
+    //get fasi produttive da db o dal metodo feed
+    public async Task<List<ProductionStep>> GetProductionStepsAsync()
+    {
+        if (!await _context.ProductionSteps.AnyAsync())
         {
-            return new List<ProductionStep>
+            await SeedProductionStepsAsync();
+        }
+
+        return await _context.ProductionSteps
+            .OrderBy(step => step.Id)
+            .ToListAsync();
+    }
+
+    //creare uno step 
+    public async Task CreateProductionStepAsync(ProductionStep productionStep)
+    {
+        _context.ProductionSteps.Add(productionStep);
+
+        await _context.SaveChangesAsync();
+    }
+
+    //seed di uno step
+    private async Task SeedProductionStepsAsync()
+    {
+        var productionSteps = new List<ProductionStep>
         {
             new ProductionStep
             {
                 Name = "Taglio",
                 Machine = "Laser 01",
-                Status = "Attiva",
+                Status = MachineStatus.Active,
                 PiecesPerHour = 120,
                 QueueCount = 3,
                 Efficiency = 92
@@ -21,7 +54,7 @@ namespace ProcessMonitor.Services
             {
                 Name = "Assemblaggio",
                 Machine = "Linea A",
-                Status = "Rallentata",
+                Status = MachineStatus.SlowedDown,
                 PiecesPerHour = 55,
                 QueueCount = 9,
                 Efficiency = 64
@@ -30,7 +63,7 @@ namespace ProcessMonitor.Services
             {
                 Name = "Controllo qualità",
                 Machine = "QC 02",
-                Status = "Ferma",
+                Status = MachineStatus.Stopped,
                 PiecesPerHour = 0,
                 QueueCount = 6,
                 Efficiency = 0
@@ -39,12 +72,15 @@ namespace ProcessMonitor.Services
             {
                 Name = "Imballaggio",
                 Machine = "Pack 01",
-                Status = "Attiva",
+                Status = MachineStatus.Active,
                 PiecesPerHour = 100,
                 QueueCount = 2,
                 Efficiency = 88
             }
         };
-        }
+
+        _context.ProductionSteps.AddRange(productionSteps);
+
+        await _context.SaveChangesAsync();
     }
 }

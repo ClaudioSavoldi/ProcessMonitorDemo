@@ -1,6 +1,6 @@
 ﻿@page "/"
 @using ProcessMonitor.Models
-@using ProcessMonitor.Services
+@using ProcessMonitorDemo.Services
 @inject ProductionService ProductionService
 
 
@@ -83,18 +83,18 @@
     private int CriticalCount =>
     productionSteps.Count(step =>
         step.Efficiency < 70 ||
-        step.Status == "Ferma" ||
+         step.Status == Enums.MachineStatus.Stopped ||
         step.QueueCount > 5
     );
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        productionSteps = ProductionService.GetProductionSteps();
+        productionSteps = await ProductionService.GetProductionStepsAsync();
     }
 
     private string GetEvaluation(ProductionStep step)
     {
-        if (step.Status == "Ferma")
+        if (step.Status == Enums.MachineStatus.Stopped)
         {
             return "Fermo macchina";
         }

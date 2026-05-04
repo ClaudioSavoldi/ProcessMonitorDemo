@@ -1,0 +1,73 @@
+﻿@page "/create-production-step"
+@rendermode InteractiveServer
+
+@using ProcessMonitor.Enums
+@using ProcessMonitor.Models
+@using ProcessMonitorDemo.Services
+@inject ProductionService ProductionService
+@inject NavigationManager NavigationManager
+
+
+<PageTitle>Nuova fase produttiva</PageTitle>
+
+<h1>Nuova fase produttiva</h1>
+
+<p>Inserire una nuova fase produttiva.</p>
+
+<EditForm Model="newProductionStep" OnValidSubmit="CreateStep">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label class="form-label">Nome fase</label>
+        <InputText class="form-control" @bind-Value="newProductionStep.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Macchina</label>
+        <InputText class="form-control" @bind-Value="newProductionStep.Machine" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Stato</label>
+        <InputSelect class="form-select" @bind-Value="newProductionStep.Status">
+            <option value="@MachineStatus.Active">Attiva</option>
+            <option value="@MachineStatus.SlowedDown">Rallentata</option>
+            <option value="@MachineStatus.Stopped">Ferma</option>
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Pezzi/ora</label>
+        <InputNumber class="form-control" @bind-Value="newProductionStep.PiecesPerHour" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Coda lavorazioni</label>
+        <InputNumber class="form-control" @bind-Value="newProductionStep.QueueCount" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Efficienza %</label>
+        <InputNumber class="form-control" @bind-Value="newProductionStep.Efficiency" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Salva fase produttiva
+    </button>
+</EditForm>
+
+
+@code {
+    private ProductionStep newProductionStep = new()
+    {
+        Status = MachineStatus.Active,
+        Efficiency = 80
+    };
+
+    private async Task CreateStep()
+    {
+        await ProductionService.CreateProductionStepAsync(newProductionStep);
+
+        NavigationManager.NavigateTo("/");
+    }
+}
